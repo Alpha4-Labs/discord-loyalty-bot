@@ -3,20 +3,33 @@ main = "src/index.js"
 compatibility_date = "2024-11-23"
 compatibility_flags = ["nodejs_compat"]
 
+# Custom domain configuration
+[[routes]]
+pattern = "discord-bot.loyalteez.app/*"
+zone_name = "loyalteez.app"
+
+# Service bindings for worker-to-worker communication (avoids 522 timeouts)
+[[services]]
+binding = "EVENT_HANDLER"
+service = "loyalteez-event-handler"
+
+[[services]]
+binding = "PREGENERATION"
+service = "loyalteez-pregeneration"
+
 # key-value storage for tracking message counts and cooldowns
 [[kv_namespaces]]
 binding = "DISCORD_BOT_KV"
-id = "choose-id-during-deployment"
-preview_id = "choose-id-during-deployment"
+id = "2ae53050f8084132bbe8bfe20aaa68ea"
 
 [vars]
 # Application ID from Discord Developer Portal
-DISCORD_APPLICATION_ID = ""
+DISCORD_APPLICATION_ID = "1380238017268154439"
 # Public Key from Discord Developer Portal for signature verification
-DISCORD_PUBLIC_KEY = ""
+DISCORD_PUBLIC_KEY = "3b945e2d759ac404e503f5d0183a3e09d50254150c19d53464daefaa103cbe82"
 # Loyalteez Brand ID (Wallet Address)
-BRAND_ID = ""
-# API URL (default to production)
+BRAND_ID = "0xf8964eB6D654659a4935363595db1095474Be22F"
+# API URL (default to production) - kept for fallback
 LOYALTEEZ_API_URL = "https://api.loyalteez.app"
 
 # Secrets must be set via `wrangler secret put DISCORD_TOKEN`

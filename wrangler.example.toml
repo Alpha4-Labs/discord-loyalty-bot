@@ -1,0 +1,36 @@
+name = "discord-loyalty-bot"
+main = "src/index.js"
+compatibility_date = "2024-11-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Custom domain configuration (Optional)
+# [[routes]]
+# pattern = "discord-bot.your-domain.com/*"
+# zone_name = "your-domain.com"
+
+# Service bindings (Optional - for advanced setups)
+# [[services]]
+# binding = "EVENT_HANDLER"
+# service = "loyalteez-event-handler"
+
+# [[services]]
+# binding = "PREGENERATION"
+# service = "loyalteez-pregeneration"
+
+# Key-value storage
+[[kv_namespaces]]
+binding = "DISCORD_BOT_KV"
+id = "your_kv_namespace_id"
+
+[vars]
+# Application ID from Discord Developer Portal
+DISCORD_APPLICATION_ID = "your_application_id"
+# Public Key from Discord Developer Portal
+DISCORD_PUBLIC_KEY = "your_public_key"
+# Loyalteez Brand ID (Wallet Address)
+BRAND_ID = "0x..."
+# API URL
+LOYALTEEZ_API_URL = "https://api.loyalteez.app"
+
+# Secrets must be set via `wrangler secret put DISCORD_TOKEN`
+

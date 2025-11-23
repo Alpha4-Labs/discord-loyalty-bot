@@ -5,7 +5,9 @@ A serverless Discord bot built on Cloudflare Workers that integrates with the Lo
 ## Features
 
 - **Serverless Architecture**: Runs entirely on Cloudflare Workers (no paid VPS required).
-- **Slash Commands**: `/join`, `/daily`, `/balance`.
+- **Slash Commands**: `/join`, `/daily`, `/balance`, `/claim`.
+- **Interactive Drops**: `/drop` command to create clickable reward buttons for the community.
+- **Dynamic Rewards**: Supports custom events configured via the Partner Portal.
 - **Instant Rewards**: Calls Loyalteez API to mint tokens immediately upon interaction.
 - **Secure**: Verifies Discord interaction signatures.
 
@@ -86,6 +88,42 @@ node scripts/register-commands.js
 2. Select scopes: `bot`, `applications.commands`.
 3. Copy the generated URL and open it to invite the bot to your server.
 
+## Commands
+
+| Command | Description |
+|Str|---|
+| `/join` | Claim a one-time welcome bonus (triggers `discord_join` event) |
+| `/daily` | Claim a daily check-in reward (triggers `daily_checkin` event) |
+| `/claim <event_id>` | Claim a reward for a specific event ID |
+| `/drop <event_id> [label] [desc]` | **Admin**: Create a button that users can click to claim a reward |
+| `/balance` | View link to check token balance |
+| `/help` | Show available commands |
+
+## Integration Recipes 🧪
+
+Want to do more than just slash commands? Check out **[RECIPES.md](RECIPES.md)** for advanced integration patterns, including:
+- 🎮 **Gamified Drops** for AMAs and events.
+- 👑 **Role-Gated Rewards** for VIPs.
+- 🌐 **Website Quests** to drive traffic.
+- 🤖 **Passive Tracking** (Voice/Chat) via Bridge integrations.
+
+## Creating Custom Rewards
+
+You can create custom reward rules in the **Partner Portal** -> **Settings** -> **Events**.
+
+### Manual Claim
+Users type the command manually:
+```
+/claim event_id:newsletter_subscribe
+```
+
+### Interactive Drop (Cleaner Way)
+Admins can create a clickable button for the community:
+```
+/drop event_id:newsletter_subscribe label:"Verify Subscription" description:"Click to get 50 LTZ!"
+```
+The bot will post a message with a button. Users simply click the button to claim the reward instantly.
+
 ## Project Structure
 
 - `src/index.js`: Main worker logic (Router, Signature Verification).
@@ -94,9 +132,8 @@ node scripts/register-commands.js
 
 ## Customization
 
-To add new commands:
+To add new hardcoded commands:
 1. Add the command definition in `scripts/register-commands.js`.
 2. Add the handler logic in `src/index.js` (inside `handleCommand` switch).
 3. Run `node scripts/register-commands.js` to update Discord.
 4. Redeploy with `npm run deploy`.
-

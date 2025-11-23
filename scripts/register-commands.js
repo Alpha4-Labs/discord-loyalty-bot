@@ -1,4 +1,4 @@
-import { REST, Routes } from 'discord.js';
+import { REST, Routes, ApplicationCommandOptionType } from 'discord.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -25,6 +25,42 @@ const commands = [
   {
     name: 'help',
     description: 'Show available commands',
+  },
+  {
+    name: 'claim',
+    description: 'Claim a reward for a specific event (e.g. newsletter_subscribe)',
+    options: [
+      {
+        name: 'event_id',
+        description: 'The ID of the event to claim',
+        type: ApplicationCommandOptionType.String,
+        required: true,
+      },
+    ],
+  },
+  {
+    name: 'drop',
+    description: 'Admin: Create a reward drop button for the community',
+    options: [
+      {
+        name: 'event_id',
+        description: 'The ID of the event users will claim',
+        type: ApplicationCommandOptionType.String,
+        required: true,
+      },
+      {
+        name: 'label',
+        description: 'Text to display on the button (default: "Claim Reward")',
+        type: ApplicationCommandOptionType.String,
+        required: false,
+      },
+      {
+        name: 'description',
+        description: 'Message content for the drop',
+        type: ApplicationCommandOptionType.String,
+        required: false,
+      }
+    ],
   },
 ];
 
