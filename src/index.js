@@ -79,8 +79,31 @@ async function handleCommand(interaction, env) {
           }
         });
 
+      case 'daily-config':
+        // Admin command to bind /daily to a specific event ID
+        const dailyEventId = options.find(opt => opt.name === 'event_id')?.value;
+        if (!dailyEventId) {
+            return jsonResponse({
+                type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                data: { content: '❌ Please provide an event_id.' }
+            });
+        }
+        
+        await env.DISCORD_BOT_KV.put(`DAILY_EVENT_ID:${interaction.guild_id}`, dailyEventId);
+        
+        return jsonResponse({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: { content: `✅ **Daily Reward Configured!**\nNow, when users type \`/daily\`, they will claim event: \`${dailyEventId}\`.` }
+        });
+
       case 'daily':
-        const dailyResult = await loyalteez.sendEvent('daily_checkin', userEmail, {
+        let targetEventId = 'daily_checkin'; // Default
+        const configuredId = await env.DISCORD_BOT_KV.get(`DAILY_EVENT_ID:${interaction.guild_id}`);
+        if (configuredId) {
+            targetEventId = configuredId;
+        }
+
+        const dailyResult = await loyalteez.sendEvent(targetEventId, userEmail, {
           discord_id: userId,
           username: username,
           server_id: interaction.guild_id
@@ -161,6 +184,7 @@ async function handleCommand(interaction, env) {
                          `/daily - Claim your daily check-in reward\n` + 
                          `/claim <event_id> - Claim a specific reward by Event ID\n` +
                          `/drop <event_id> - (Admin) Create a reward drop button\n` +
+                         `/daily-config <event_id> - (Admin) Set the event for /daily\n` +
                          `/balance - Check your token balance`
             }
         });

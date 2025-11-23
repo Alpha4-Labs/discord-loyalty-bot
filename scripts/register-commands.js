@@ -19,6 +19,18 @@ const commands = [
     description: 'Claim your daily participation reward',
   },
   {
+    name: 'daily-config',
+    description: 'Admin: Configure which event ID is triggered by /daily',
+    options: [
+      {
+        name: 'event_id',
+        description: 'The Event ID to bind to /daily (e.g. custom_...)',
+        type: ApplicationCommandOptionType.String,
+        required: true,
+      }
+    ]
+  },
+  {
     name: 'balance',
     description: 'Check your Loyalteez token balance',
   },
