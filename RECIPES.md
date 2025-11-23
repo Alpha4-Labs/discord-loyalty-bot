@@ -1,111 +1,119 @@
 # 🧪 Loyalteez Discord Integration Recipes
 
-This guide provides "recipes" for integrating Loyalteez into your Discord community, ranging from simple drops to complex, multi-stage quests.
+This guide provides "recipes" for integrating Loyalteez into your Discord community, ranging from simple one-click drops to complex, automated habit loops.
 
 ---
 
-## Level 1: The "Drop" (Basic)
+## Level 1: The "Instant Drop" (Basic)
 **Best for:** AMAs, Live Events, Flash Giveaways, Polls.
 
 The simplest way to reward users. You create a button, they click it, they get points.
 
 ### Steps
-1.  **Create Event**: In Partner Portal -> Settings -> Events, create a Custom Event (e.g., "AMA Attendee", ID: `ama_august`).
-2.  **Deploy Drop**: In your Discord event channel, run:
+1.  **Create Event**: Go to **Partner Portal -> Settings -> Events**.
+2.  **Configure**: Click **"Create Custom Event"**.
+    *   Select **"Discord Bot Interaction"** as the detection method.
+    *   Set your reward amount (e.g., 50 LTZ).
+    *   **Save Configuration**.
+3.  **Copy Command**: Expand your new event in the list. You will see a generated command like:
     ```
-    /drop event_id:ama_august label:"I'm here! (50 LTZ)" description:"Thanks for joining our August AMA! Click below to claim your attendance points."
+    /drop event_id:custom_123... label:"Claim AMA Reward"
     ```
-3.  **Result**: Users click the button and receive 50 LTZ instantly.
+4.  **Deploy**: Paste that command into your Discord channel.
+5.  **Result**: A button appears. Users click it and receive 50 LTZ instantly.
 
 ---
 
-## Level 2: Role-Based Rewards (Intermediate)
-**Best for:** Rewarding VIPs, OG members, or specific role holders.
+## Level 2: The "Daily Habit" (Retention)
+**Best for:** Daily check-ins, keeping users coming back.
 
-Since the bot handles permissions via Discord's native channel settings, you can gate rewards by role easily.
+You can create a recurring daily reward and bind it to the easy-to-remember `/daily` command.
 
 ### Steps
-1.  **Create Private Channel**: Create a channel (e.g., `#vip-lounge`) visible only to the "VIP" role.
-2.  **Create Event**: Create an event "VIP Monthly Bonus" (ID: `vip_bonus_sept`) with a **30-day cooldown**.
-3.  **Deploy Drop**: In `#vip-lounge`, run:
+1.  **Create Event**: In Partner Portal, create a Custom Event named "Daily Reward".
+    *   **Reward**: 10 LTZ.
+    *   **Cooldown**: Set to **24 hours**.
+    *   **Save Configuration**.
+2.  **Get Event ID**: Expand the event and copy the long ID (e.g., `custom_x8s7...`).
+3.  **Bind Command**: In your Discord server (as Admin), run:
     ```
-    /drop event_id:vip_bonus_sept label:"Claim Monthly VIP Bonus" description:"Exclusive reward for our VIP members."
+    /daily-config event_id:custom_x8s7...
     ```
-4.  **Result**: Only VIPs can see the channel and click the button. The cooldown ensures they can only claim once per month.
+4.  **Result**: Now, whenever *anyone* types `/daily`, they will trigger this specific reward rule. If they try again within 24 hours, the bot will remind them to wait.
 
 ---
 
-## Level 3: "The Quest" (Advanced)
+## Level 3: Role-Gated Rewards (Intermediate)
+**Best for:** VIPs, OG members, Subscribers, or specific role holders.
+
+The bot itself respects Discord's channel permissions. By placing a Drop in a restricted channel, you effectively gate the reward.
+
+### Steps
+1.  **Create Private Channel**: Create a channel (e.g., `#vip-lounge`) and set permissions so only the **"VIP"** role can view it.
+2.  **Create Event**: In Partner Portal, create an event "VIP Monthly Bonus".
+    *   **Cooldown**: Set to **720 hours** (30 days).
+    *   **Save**.
+3.  **Deploy Drop**: In the `#vip-lounge` channel, run the generated `/drop` command.
+4.  **Result**: Only VIPs can see the button. Non-VIPs don't even know it exists.
+
+---
+
+## Level 4: "The Quest" (Advanced)
 **Best for:** Driving traffic from Discord to your website/app.
 
-Instead of rewarding the click immediately, you use Discord as the starting point for an external action.
+Instead of rewarding the click inside Discord, use Discord as the *starting point* for an external action.
 
 ### Steps
-1.  **Create Event**: Create an event "Website Quest" (ID: `site_visit`).
-2.  **Setup**: Ensure your website has the Loyalteez SDK installed.
-3.  **Deploy Drop (Link)**: Instead of a `/drop` (which claims instantly), post a standard message with a link:
-    *   "Quest: Visit our new shop to earn 100 LTZ! [Click Here](https://yourstore.com/shop?utm_source=discord)"
-4.  **Result**:
+1.  **Create Event**: Create a standard "Page Visit" or "Form Submission" event in the Portal (e.g., "Read Blog Post").
+2.  **Deploy Link**: Instead of using `/drop`, post a regular message in Discord with a link:
+    > 📜 **New Quest Available!**
+    > Read our latest roadmap update to earn 100 LTZ!
+    > [Click here to read and claim](https://yourbrand.com/blog/roadmap)
+3.  **Result**:
     *   User clicks link -> Visits site.
-    *   Loyalteez SDK on your site detects the visit (via `page_view` or specific action).
-    *   User earns points on the site.
-    *   **Bot Notification**: If you want the bot to announce it, you can use a Webhook (see Level 4).
+    *   The Loyalteez widget on your site detects the visit and awards the points.
+    *   (Optional) The bot doesn't need to do anything, the reward happens on-chain via your site.
 
 ---
 
-## Level 4: Passive Tracking & Gateways (Expert)
+## Level 5: Passive Tracking (Expert / Developer)
 **Best for:** "Reward for every 100 messages", "Reward for Voice Chat time", "Reward for Server Boosting".
 
-**The Challenge**: This bot is "Serverless" (Cloudflare Worker), meaning it only wakes up when someone runs a command or clicks a button. It cannot "watch" chat or voice channels passively.
+**The Challenge**: This standard bot is "Serverless" (Cloudflare Worker). It sleeps until someone runs a command. It **cannot** watch chat 24/7 to count messages.
 
 ### Solution: The Gateway Bridge
-To track passive events, you need a 24/7 "Gateway Bot" or a bridge integration.
+To track passive events, you need a "Gateway" that runs 24/7.
 
-#### Option A: Use an Automation Bot (Zapier/Make)
-1.  **Trigger**: Use a tool like Zapier with a Discord integration ("New Message in Channel" or "User Assigned Role").
-2.  **Action**: Webhook to Loyalteez API.
-    *   **URL**: `https://api.loyalteez.app/loyalteez-api/manual-event`
-    *   **Payload**:
-        ```json
-        {
-          "brandId": "YOUR_BRAND_WALLET",
-          "eventType": "discord_message",
-          "userEmail": "discord_USER_ID@loyalteez.app", 
-          "metadata": { "source": "zapier" }
-        }
-        ```
-    *   *Note: You need the user's Discord ID to construct the email.*
+#### Option A: No-Code (Zapier/Make)
+1.  **Trigger**: Use Zapier with a Discord integration ("New Message in Channel").
+2.  **Action**: Send a Webhook to Loyalteez API (`https://api.loyalteez.app/loyalteez-api/manual-event`).
+    *   *Note: This can get expensive with Zapier credits for high-volume chat.*
 
-#### Option B: Custom Gateway Bot
-If you are a developer, you can build a simple Node.js bot using `discord.js` that listens for events and calls the Loyalteez API.
+#### Option B: Custom Node.js Bot
+If you are a developer, you can build a simple `discord.js` bot that listens for events and calls our API.
 
 ```javascript
+// Example: Reward voice chat (pseudo-code)
 client.on('voiceStateUpdate', (oldState, newState) => {
-  // Logic to track time...
-  // When 1 hour reached:
-  loyalteez.sendEvent('voice_chat_1hr', `discord_${userId}@loyalteez.app`);
+  if (userJoined) startTimer(user);
+  if (userLeft) {
+    const minutes = stopTimer(user);
+    if (minutes > 60) {
+       // Call Loyalteez API to reward 'voice_chat_1hr'
+       loyalteez.sendEvent('voice_chat_1hr', `discord_${user.id}@loyalteez.app`);
+    }
+  }
 });
 ```
 
 ---
 
-## Level 5: Physical Event / POAP Style
-**Best for:** IRL events, Conferences.
+## Summary of Commands
 
-### Steps
-1.  **Create QR Code**: Create a QR code that links to a deep link or a specific command trigger (requires advanced bot setup) OR simply links to your website with a unique query param.
-2.  **User Scans**: User scans QR code -> Lands on a claim page.
-3.  **Claim**: User logs in with Discord on that page -> API triggers reward -> Bot sends DM (if configured) "You claimed the IRL Event Badge!".
-
----
-
-## Summary of Event Types
-
-| Event ID (Example) | Trigger Type | Best For |
+| Command | Description | Setup Required? |
 |---|---|---|
-| `discord_join` | Command (`/join`) | Onboarding new members |
-| `daily_checkin` | Command (`/daily`) | Retention / Daily Engagement |
-| `ama_attendance` | Button (`/drop`) | Live events, Webinars |
-| `vip_bonus` | Button (Gated Channel) | Tiered rewards |
-| `bug_report` | Manual (`/claim`) | Rewarding specific contributions manually |
-
+| `/join` | Claims welcome bonus | Uses default `discord_join` rule (or map custom event to it) |
+| `/daily` | Claims daily reward | **Yes**: Run `/daily-config` to bind it to your event |
+| `/drop` | Creates a reward button | **Yes**: Needs an Event ID from Partner Portal |
+| `/claim` | Manual claim (typing ID) | **Yes**: Needs an Event ID |
+| `/balance` | Shows user balance | No setup required |
