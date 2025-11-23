@@ -82,7 +82,8 @@ async function handleCommand(interaction, env) {
       case 'daily':
         const dailyResult = await loyalteez.sendEvent('daily_checkin', userEmail, {
           discord_id: userId,
-          username: username
+          username: username,
+          server_id: interaction.guild_id
         });
 
         return jsonResponse({
