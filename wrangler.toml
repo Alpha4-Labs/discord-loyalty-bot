@@ -1,0 +1,23 @@
+name = "discord-loyalty-bot"
+main = "src/index.js"
+compatibility_date = "2024-11-23"
+compatibility_flags = ["nodejs_compat"]
+
+# key-value storage for tracking message counts and cooldowns
+[[kv_namespaces]]
+binding = "DISCORD_BOT_KV"
+id = "choose-id-during-deployment"
+preview_id = "choose-id-during-deployment"
+
+[vars]
+# Application ID from Discord Developer Portal
+DISCORD_APPLICATION_ID = ""
+# Public Key from Discord Developer Portal for signature verification
+DISCORD_PUBLIC_KEY = ""
+# Loyalteez Brand ID (Wallet Address)
+BRAND_ID = ""
+# API URL (default to production)
+LOYALTEEZ_API_URL = "https://api.loyalteez.app"
+
+# Secrets must be set via `wrangler secret put DISCORD_TOKEN`
+# Do not commit secrets to version control!
