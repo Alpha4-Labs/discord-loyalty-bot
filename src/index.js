@@ -40,7 +40,7 @@ export default {
 
       // 5. Handle Message Components (Buttons)
       if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
-        return await handleComponent(interaction, env);
+        return await handleComponent(interaction, env, ctx);
       }
 
       return new Response('Unknown Type', { status: 400 });
@@ -189,46 +189,57 @@ async function handleCommand(interaction, env) {
 /**
  * Handle Message Components (Buttons)
  */
-async function handleComponent(interaction, env) {
+async function handleComponent(interaction, env, ctx) {
   const customId = interaction.data.custom_id;
+
+  if (customId.startsWith('claim:')) {
+    // 1. Defer the response immediately to avoid timeouts during blockchain processing
+    // We use flags: 64 for ephemeral (hidden) response
+    ctx.waitUntil(processClaim(interaction, env));
+    
+    return jsonResponse({
+      type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        flags: 64
+      }
+    });
+  }
+  
+  return jsonResponse({
+    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    data: { content: 'Unknown component interaction', flags: 64 }
+  });
+}
+
+/**
+ * Process claim in background and update response
+ */
+async function processClaim(interaction, env) {
+  const customId = interaction.data.custom_id;
+  const eventId = customId.split(':')[1];
   const userId = interaction.member.user.id;
   const username = interaction.member.user.username;
   const userEmail = `discord_${userId}@loyalteez.app`;
-  
+  const appId = env.DISCORD_APPLICATION_ID;
+  const token = interaction.token;
+
   const loyalteez = new LoyalteezClient(env.BRAND_ID, env.LOYALTEEZ_API_URL, env.EVENT_HANDLER, env.PREGENERATION);
 
   try {
-    if (customId.startsWith('claim:')) {
-      const eventId = customId.split(':')[1];
-      
-      // Acknowledge interaction first (deferred) if processing might be slow, 
-      // but for now we'll just try to respond immediately.
-      // Ideally: defer -> process -> edit response.
-      
-      const result = await loyalteez.sendEvent(eventId, userEmail, {
-        discord_id: userId,
-        username: username,
-        server_id: interaction.guild_id,
-        source: 'discord_button'
-      });
+    const result = await loyalteez.sendEvent(eventId, userEmail, {
+      discord_id: userId,
+      username: username,
+      server_id: interaction.guild_id,
+      source: 'discord_button'
+    });
 
-      // Ephemeral response (only user sees it)
-      return jsonResponse({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          content: `✅ You claimed the **${eventId}** reward! (+${result.rewardAmount} LTZ)`,
-          flags: 64 // Ephemeral
-        }
-      });
-    }
-    
-    return jsonResponse({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: { content: 'Unknown component interaction', flags: 64 }
+    // Update the original deferred response with success
+    await updateInteractionResponse(appId, token, {
+      content: `✅ You claimed the **${eventId}** reward! (+${result.rewardAmount} LTZ)`
     });
 
   } catch (error) {
-    console.error('Component Error:', error);
+    console.error('Claim Error:', error);
     let errorMessage = 'Failed to process reward.';
     if (error.message && error.message.includes('Duplicate reward')) {
         errorMessage = `⏳ You've already claimed this!`;
@@ -236,11 +247,20 @@ async function handleComponent(interaction, env) {
         errorMessage = `❓ Event invalid or inactive.`;
     }
 
-    return jsonResponse({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: { content: `❌ ${errorMessage}`, flags: 64 }
+    // Update with error
+    await updateInteractionResponse(appId, token, {
+      content: `❌ ${errorMessage}`
     });
   }
+}
+
+async function updateInteractionResponse(appId, token, body) {
+  const url = `https://discord.com/api/v10/webhooks/${appId}/${token}/messages/@original`;
+  await fetch(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
 }
 
 /**
