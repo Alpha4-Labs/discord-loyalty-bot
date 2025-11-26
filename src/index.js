@@ -1,11 +1,42 @@
 import { InteractionType, InteractionResponseType, verifyKey, MessageComponentTypes, ButtonStyleTypes } from 'discord-interactions';
 import { LoyalteezClient } from './utils/loyalteez.js';
 
+// CORS headers for health checks from browser
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
 export default {
   /**
    * Main Worker Handler
    */
   async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    
+    // Handle CORS preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
+    }
+    
+    // Health check endpoint with CORS
+    if (request.method === 'GET' && (url.pathname === '/health' || url.pathname === '/')) {
+      return new Response(JSON.stringify({
+        status: 'healthy',
+        service: 'discord-loyalty-bot',
+        timestamp: new Date().toISOString(),
+        config: {
+          brandId: env.BRAND_ID ? 'configured' : 'missing',
+          publicKeyConfigured: !!env.DISCORD_PUBLIC_KEY,
+          kvConfigured: !!env.DISCORD_BOT_KV
+        }
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
     // 1. Verify Discord Signature
     if (request.method === 'POST') {
       const signature = request.headers.get('x-signature-ed25519');
@@ -46,8 +77,11 @@ export default {
       return new Response('Unknown Type', { status: 400 });
     }
 
-    // Health check for Worker
-    return new Response('Loyalteez Discord Bot is running', { status: 200 });
+    // Fallback for unhandled requests
+    return new Response('Loyalteez Discord Bot is running', { 
+      status: 200,
+      headers: corsHeaders 
+    });
   }
 };
 
